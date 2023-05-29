@@ -17,6 +17,7 @@
   <script>
     const urlParams = new URLSearchParams(window.location.search);
     const name = urlParams.get('name');
+    console.log(name);
     const socket = new WebSocket('ws://localhost:3000');
 
     socket.onopen = () => {
@@ -26,7 +27,7 @@
     socket.onmessage = (event) => {
       const data = JSON.parse(event.data);
       updateButtonStatus(data.buttonStatus, data.elapsedTime);
-      updateTurnIndicator(data.currentTurn);
+      // updateTurnIndicator(data.currentTurn);
     };
 
     function toggleButton() {

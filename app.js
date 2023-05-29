@@ -66,14 +66,17 @@ function broadcastStatus() {
 
 app.use(express.json());
 
-app.post('/', (req, res) => {
-  const { name } = req.body;
+app.get('/', (req, res) => {
 
-  if (!name) {
+  name1 = req.query.name || null;
+  
+  console.log(req.query.name);
+
+  if (!name1) {
     return res.status(400).json({ error: 'Please provide a name.' });
   }
-
-  res.redirect(`/game?name=${encodeURIComponent(name)}`);
+  
+  res.sendFile(__dirname + '/index.html');
 });
 
 // Serve static files
