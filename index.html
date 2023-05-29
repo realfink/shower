@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Button Application</title>
+  <style>
+    .turn-indicator {
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div id="turnIndicator" class="turn-indicator"></div>
+  <div id="buttonContainer">
+    <button id="toggleButton" onclick="toggleButton()">Toggle Button</button>
+  </div>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const name = urlParams.get('name');
+    const socket = new WebSocket('ws://localhost:3000');
+
+    socket.onopen = () => {
+      socket.send(JSON.stringify({ action: 'requestTurn', name }));
+    };
+
+    socket.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      updateButtonStatus(data.buttonStatus, data.elapsedTime);
+      updateTurnIndicator(data.currentTurn);
+    };
+
+    function toggleButton() {
+      fetch('/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name, action: 'toggleButton' }),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.error) {
+            console.error(data.error);
+          } else {
+            socket.send(JSON.stringify({ action: 'toggleButton', name }));
+          }
+        })
+        .catch((error) => console.error(error));
+    }
+
+    function updateButtonStatus(status, elapsedTime) {
+      const buttonContainer = document.getElementById('buttonContainer');
+      const toggleButton = document.getElementById('toggleButton');
+
+      if (status) {
+        toggleButton.innerText = 'Button ON';
+        buttonContainer.innerHTML += `<p>Button has been ON for ${elapsedTime} seconds.</p>`;
+      } else {
+        toggleButton.innerText = 'Button OFF';
+        buttonContainer.innerHTML = '';
+      }
+    }
+
+    function updateTurnIndicator(turn) {
+      const turnIndicator = document.getElementById('turnIndicator');
+
+      if (turn === name) {
+        turnIndicator.innerText = `It's your turn to toggle the button.`;
+        turnIndicator.style.color = 'green';
+      } else {
+        turnIndicator.innerText = `Waiting for ${turn} to toggle the button.`;
+        turnIndicator.style.color = 'red';
+      }
+    }
+  </script>
+</body>
+</html>
