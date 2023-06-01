@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Button Application</title>
+  <title>I'm in the Shower!</title>
   <style>
     .turn-indicator {
       margin-bottom: 10px;
@@ -9,70 +9,85 @@
   </style>
 </head>
 <body>
-  <div id="turnIndicator" class="turn-indicator"></div>
+  <script>
+    inshower = false;
+  </script>
   <div id="buttonContainer">
-    <button id="toggleButton" onclick="toggleButton()">Toggle Button</button>
+    <button id="button" type="button" onclick="request()" >
+      <img id="button-image" width="500" height="600" \>
+    </button>
+    <div id="messageArea" \>
   </div>
 
   <script>
     const urlParams = new URLSearchParams(window.location.search);
     const name = urlParams.get('name');
-    console.log(name);
     const socket = new WebSocket('ws://localhost:3000');
 
     socket.onopen = () => {
-      socket.send(JSON.stringify({ action: 'requestTurn', name }));
+      requestStatus();
     };
 
     socket.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      updateButtonStatus(data.buttonStatus, data.elapsedTime);
-      // updateTurnIndicator(data.currentTurn);
+      updateStatus(data.currentTurn, data.startTime);
     };
 
-    function toggleButton() {
-      fetch('/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ name, action: 'toggleButton' }),
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          if (data.error) {
-            console.error(data.error);
-          } else {
-            socket.send(JSON.stringify({ action: 'toggleButton', name }));
-          }
-        })
-        .catch((error) => console.error(error));
+    function request() {
+      console.log("clicked");
+      if (inshower)
+        releaseShower();
+      else
+        requestShower();
     }
 
-    function updateButtonStatus(status, elapsedTime) {
-      const buttonContainer = document.getElementById('buttonContainer');
-      const toggleButton = document.getElementById('toggleButton');
-
-      if (status) {
-        toggleButton.innerText = 'Button ON';
-        buttonContainer.innerHTML += `<p>Button has been ON for ${elapsedTime} seconds.</p>`;
-      } else {
-        toggleButton.innerText = 'Button OFF';
-        buttonContainer.innerHTML = '';
+    function requestStatus() {
+      try {
+        socket.send(JSON.stringify({ action: 'requestStatus', name }))
+      } catch (error) {
+        console.error(error);
+      }
+    }
+    function requestShower() {
+      try {
+        socket.send(JSON.stringify({ action: 'requestShower', name }))
+      } catch (error) {
+        console.error(error);
       }
     }
 
-    function updateTurnIndicator(turn) {
-      const turnIndicator = document.getElementById('turnIndicator');
-
-      if (turn === name) {
-        turnIndicator.innerText = `It's your turn to toggle the button.`;
-        turnIndicator.style.color = 'green';
-      } else {
-        turnIndicator.innerText = `Waiting for ${turn} to toggle the button.`;
-        turnIndicator.style.color = 'red';
+    function releaseShower() {
+      try {
+        socket.send(JSON.stringify({ action: 'releaseShower', name }))
+      } catch (error) {
+        console.error(error);
       }
     }
+
+    function updateStatus(currentTurn, startTime) {
+      const button = document.getElementById('button');
+      const image = document.getElementById('button-image');
+      const messageArea = document.getElementById('messageArea');
+      if (currentTurn) {
+        const d = new Date(startTime);
+        if (currentTurn === name) {
+          messageArea.innerText = "I'm in the shower since " + d.toLocaleTimeString();
+          inshower = true;
+        }
+        else {
+          messageArea.innerText = currentTurn + " is in the shower since " + d.toLocaleTimeString();
+          inshower = false;
+        }
+        messageArea.style.color = 'red';
+        image.setAttribute('src', '768px-Red_round_button.svg.png');
+      } else {
+        messageArea.innerText = 'The shower is free';
+        messageArea.style.color = 'green';
+        image.setAttribute('src', '768px-Green_round_button.svg.png');
+        inshower = false;
+      }
+    }
+
   </script>
 </body>
 </html>
