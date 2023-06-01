@@ -13,7 +13,7 @@ let startTime = 0;
 wss.on('connection', (ws) => {
   ws.on('message', (message) => {
     const { action, name } = JSON.parse(message);
-    console.log(action, name);
+    console.log("got message", action, name);
     switch (action) {
       case 'requestShower':
         if (currentTurn === null) {
